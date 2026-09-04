@@ -1,0 +1,137 @@
+<div class="ticker">
+  <div class="ticker-track" id="tickerTrack"></div>
+</div>
+
+<div class="wrap">
+
+  <div class="hero">
+    <div class="badge">
+      <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+      <div class="badge-inner">
+        <svg viewBox="0 0 480 453" preserveAspectRatio="xMidYMid meet" role="img" aria-label="The Fund emblem">
+          <image href="data:image/png;base64,__LOGO_B64__" x="0" y="0" width="480" height="453"></image>
+          <path class="centaur-trace" pathLength="100" d="M156 69 L145 82 L144 99 L150 106 L150 111 L161 116 L168 126 L148 140 L141 150 L140 168 L144 199 L139 218 L139 253 L117 322 L109 327 L112 345 L116 345 L128 332 L125 322 L145 256 L152 251 L159 281 L172 308 L172 331 L176 345 L174 394 L178 399 L194 399 L197 395 L190 343 L193 299 L198 298 L205 303 L213 320 L213 335 L219 360 L216 381 L217 403 L221 406 L239 406 L243 402 L244 386 L234 358 L236 337 L232 318 L233 305 L237 301 L288 289 L295 293 L305 317 L305 339 L298 368 L304 372 L314 372 L320 366 L319 343 L325 294 L328 291 L334 292 L352 304 L360 317 L361 349 L351 374 L351 381 L358 386 L372 385 L375 380 L377 341 L382 337 L390 346 L389 335 L398 300 L382 270 L375 241 L367 226 L354 214 L334 206 L315 204 L299 208 L290 198 L280 194 L264 198 L258 204 L253 219 L242 219 L247 190 L237 152 L225 136 L210 126 L211 122 L223 115 L229 101 L230 89 L224 85 L222 75 L212 64 L206 64 L191 56 L175 58 L167 65 Z"></path>
+        </svg>
+      </div>
+    </div>
+    <div class="hero-text">
+      <h1>The Fund</h1>
+    </div>
+    <div class="hero-status">
+      <div><span class="dot"></span>SIX PARTNERS · ONE ACCOUNT</div>
+      <div id="lastSyncLine" style="margin-top:4px;">LOADED —</div>
+    </div>
+  </div>
+
+  <div class="offline-banner" id="offlineBanner">
+    ⚠ CHANGES AREN'T SAVING RIGHT NOW — this view may be read-only, or live sync is unavailable in this preview.
+  </div>
+
+  <div class="idbar">
+    <span class="idbar-label">Voting &amp; posting as</span>
+    <div id="memberPills"></div>
+    <div class="idbar-current" id="idbarCurrent"></div>
+  </div>
+
+  <div class="stats" id="statsRow"></div>
+
+  <div class="grid-2">
+
+    <div class="panel">
+      <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+      <div class="panel-head">
+        <h2>Board Meetings</h2>
+        <span class="panel-flag" id="meetingFlag">—</span>
+      </div>
+      <div class="panel-body">
+
+        <div class="readout" id="nextMeetingLockedBox" style="display:none;">
+          <div class="rk">Next Meeting — Locked In</div>
+          <div class="rv locked" id="nextMeetingLockedLabel">—</div>
+          <button class="btn ghost small" id="reopenVoteBtn" style="margin-top:10px;">Reopen voting</button>
+        </div>
+
+        <div id="meetingVoteSection">
+          <div class="rk" style="font-family:var(--mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-faint);margin-bottom:8px;">Next Meeting — Vote On A Date</div>
+          <div id="meetingDatesList"></div>
+          <div class="add-form">
+            <input type="text" id="newDateLabel" placeholder="Propose a date &amp; time, e.g. Sat Oct 18 · 7:00 PM">
+            <button class="btn" id="addDateBtn">Propose</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="panel">
+      <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+      <div class="panel-head">
+        <h2>Fund Ledger</h2>
+        <span class="panel-flag live">Editable</span>
+      </div>
+      <div class="panel-body">
+
+        <div class="balance-row">
+          <div class="balance-tile">
+            <div class="rk">Total Fund</div>
+            <div class="rv">$<input class="num-in" type="number" id="fundTotal" style="width:90px;border:none;background:transparent;padding:0;font-size:22px;color:var(--accent-strong);"></div>
+          </div>
+          <div class="balance-tile">
+            <div class="rk">Monthly Dues</div>
+            <div class="rv">$<input class="num-in" type="number" id="fundDues" style="width:60px;border:none;background:transparent;padding:0;font-size:22px;"></div>
+          </div>
+        </div>
+
+        <div class="stackbar" id="stackbar"><div class="seg-h" id="segHysa"></div><div class="seg-i" id="segInv"></div></div>
+        <div class="stackbar-legend">
+          <span><i class="i1"></i>HYSA $<input class="num-in" type="number" id="fundHysa" style="width:60px;background:transparent;border:none;padding:0;color:var(--text-dim);font-size:10.5px;"></span>
+          <span><i class="i2"></i>Investments $<input class="num-in" type="number" id="fundInv" style="width:60px;background:transparent;border:none;padding:0;color:var(--text-dim);font-size:10.5px;"></span>
+        </div>
+
+        <div class="ledger-wrap">
+          <table class="ledger" id="ledgerTable"></table>
+        </div>
+        <div style="margin-top:12px;">
+          <button class="btn small" id="addMonthBtn">+ Add Month</button>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <div class="panel wide">
+    <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+    <div class="panel-head">
+      <h2>Next Trip</h2>
+      <span class="panel-flag" id="tripFlag">—</span>
+    </div>
+    <div class="trip-grid">
+      <div class="trip-col">
+        <h3>Destination Vote</h3>
+        <div id="tripOptionsList"></div>
+        <div class="add-form-2">
+          <input type="text" id="newTripDest" placeholder="Destination, e.g. Outer Banks, NC">
+          <input type="text" id="newTripBlurb" placeholder="Why (optional)">
+          <button class="btn full" id="addTripBtn">Add Destination</button>
+        </div>
+      </div>
+      <div class="trip-col">
+        <h3>Trip Talk</h3>
+        <div class="discussion" id="discussionList"></div>
+        <div class="discussion-input">
+          <input type="text" id="discussionInput" placeholder="Say something...">
+          <button class="btn small" id="discussionSendBtn">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="roster" id="rosterRow"></div>
+  <div class="foot-note">
+    THE FUND — established 2025 · private dashboard for the six partners · $<span id="footDues">25</span>/mo standing dues · all figures editable by any partner, live for everyone.
+  </div>
+
+</div>
+
+<div class="save-flash" id="saveFlash">SAVED</div>
