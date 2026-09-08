@@ -638,6 +638,7 @@
 
   var me = null;
   try{ me = localStorage.getItem('fund_member_v1'); }catch(e){}
+  var identityError = false;
 
   var state = {
     fund: { total:0, hysa:0, investments:0, dues:25, ledger:[] },
@@ -710,22 +711,23 @@
   }
 
   /* ---------------- render: identity bar ---------------- */
+  // Identity is no longer "click a name to become that person" — anyone
+  // could spoof anyone else that way. Each partner instead has a private
+  // link (see resolveIdentity below); pills are just a display now.
   function renderMemberPills(){
     var wrap = document.getElementById('memberPills');
     wrap.innerHTML = MEMBERS.map(function(m){
       var active = m.name===me ? ' active':'';
-      return '<button class="pill'+active+'" data-name="'+esc(m.name)+'"><span class="swatch" style="background:'+m.color+'"></span>'+esc(m.name)+'</button>';
+      return '<span class="pill'+active+'" style="cursor:default;"><span class="swatch" style="background:'+m.color+'"></span>'+esc(m.name)+'</span>';
     }).join('');
-    Array.prototype.forEach.call(wrap.querySelectorAll('.pill'), function(btn){
-      btn.addEventListener('click', function(){
-        me = btn.getAttribute('data-name');
-        try{ localStorage.setItem('fund_member_v1', me); }catch(e){}
-        renderMemberPills();
-        renderAll();
-      });
-    });
     var cur = document.getElementById('idbarCurrent');
-    cur.innerHTML = me ? ('signed in as <b>'+esc(me)+'</b>') : 'pick your name to vote or post';
+    if(me){
+      cur.innerHTML = 'signed in as <b>'+esc(me)+'</b>';
+    } else if(identityError){
+      cur.innerHTML = '<span style="color:#ff6b4a;">that link isn\'t valid — ask Chris to resend yours</span>';
+    } else {
+      cur.innerHTML = 'view only — ask Chris for your personal link to vote or post';
+    }
   }
 
   /* ---------------- render: stats ---------------- */
@@ -889,7 +891,7 @@
 
   function requireMe(){
     if(!me){
-      alert('Pick your name up top first — that is how your vote gets counted.');
+      alert('This device isn\'t linked to your name yet — ask Chris for your personal link, open it once, and you\'re set from then on.');
       return false;
     }
     return true;
@@ -939,6 +941,7 @@
 
   function wireStaticEvents(){
     document.getElementById('reopenVoteBtn').addEventListener('click', function(){
+      if(!requireMe()) return;
       state.meeting.decided = false; publishState();
     });
     document.getElementById('addDateBtn').addEventListener('click', function(){
@@ -953,6 +956,7 @@
 
     ['fundTotal','fundDues','fundHysa','fundInv'].forEach(function(id){
       document.getElementById(id).addEventListener('change', function(e){
+        if(!requireMe()){ renderFund(); return; }
         var map = {fundTotal:'total',fundDues:'dues',fundHysa:'hysa',fundInv:'investments'};
         state.fund[map[id]] = Number(e.target.value)||0;
         publishState();
@@ -960,6 +964,7 @@
     });
 
     document.getElementById('addMonthBtn').addEventListener('click', function(){
+      if(!requireMe()) return;
       var entries = {};
       MEMBERS.forEach(function(m){ entries[m.name] = state.fund.dues; });
       state.fund.ledger.push({label:'New', entries:entries});
@@ -994,12 +999,14 @@
 
     document.body.addEventListener('change', function(e){
       if(e.target.classList && e.target.classList.contains('ledger-cell')){
+        if(!requireMe()){ renderFund(); return; }
         var ri = Number(e.target.getAttribute('data-row'));
         var name = e.target.getAttribute('data-name');
         state.fund.ledger[ri].entries[name] = Number(e.target.value)||0;
         publishState();
       }
       if(e.target.classList && e.target.classList.contains('ledger-label')){
+        if(!requireMe()){ renderFund(); return; }
         var ri2 = Number(e.target.getAttribute('data-row'));
         state.fund.ledger[ri2].label = e.target.value;
         publishState();
@@ -1016,6 +1023,7 @@
         toggleVote('dates', voteDateId);
       }
       if(lockDateId){
+        if(!requireMe()) return;
         var d = state.dates.filter(function(x){return x.id===lockDateId;})[0];
         if(d){
           state.meeting.decided = true;
@@ -1054,6 +1062,34 @@
     syncedNow();
   }
 
+  /** A partner's personal link looks like ...netlify.app/?id=<their token>.
+   * Opening it once resolves the token to a name via a database function
+   * (the token itself is never exposed to other visitors — the function
+   * only ever answers "yes/no, and if yes, whose"), then remembers that
+   * name on this device/browser going forward. Nobody can just click a
+   * different name and become someone else anymore. */
+  function resolveIdentity(){
+    var token = null;
+    try{
+      token = new URLSearchParams(window.location.search).get('id');
+    }catch(e){}
+    if(!token) return Promise.resolve();
+
+    return db.rpc('resolve_member', { p_token: token }).then(function(res){
+      if(res.error || !res.data){
+        identityError = true;
+        return;
+      }
+      me = res.data;
+      try{ localStorage.setItem('fund_member_v1', me); }catch(e){}
+      try{
+        var url = new URL(window.location.href);
+        url.searchParams.delete('id');
+        window.history.replaceState({}, '', url.pathname + (url.search || '') + url.hash);
+      }catch(e){}
+    });
+  }
+
   function init(){
     wireStaticEvents();
     renderAll();
@@ -1065,21 +1101,25 @@
 
     db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    db.from('fund_state').select('data').eq('id', ROW_ID).single().then(function(res){
-      if(res.error || !res.data){
-        showOffline('⚠ COULD NOT LOAD — ' + (res.error ? res.error.message : 'no data found') + '. Refresh to retry.');
-        return;
-      }
-      state = res.data.data;
-      renderAll();
-      syncedNow();
-      hideOffline();
+    resolveIdentity().then(function(){
+      renderMemberPills();
 
-      db.channel('fund_state_changes')
-        .on('postgres_changes', { event:'UPDATE', schema:'public', table:'fund_state', filter:'id=eq.'+ROW_ID }, function(payload){
-          applyRemoteState(payload.new && payload.new.data);
-        })
-        .subscribe();
+      db.from('fund_state').select('data').eq('id', ROW_ID).single().then(function(res){
+        if(res.error || !res.data){
+          showOffline('⚠ COULD NOT LOAD — ' + (res.error ? res.error.message : 'no data found') + '. Refresh to retry.');
+          return;
+        }
+        state = res.data.data;
+        renderAll();
+        syncedNow();
+        hideOffline();
+
+        db.channel('fund_state_changes')
+          .on('postgres_changes', { event:'UPDATE', schema:'public', table:'fund_state', filter:'id=eq.'+ROW_ID }, function(payload){
+            applyRemoteState(payload.new && payload.new.data);
+          })
+          .subscribe();
+      });
     });
   }
 

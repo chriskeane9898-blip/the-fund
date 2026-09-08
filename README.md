@@ -12,6 +12,10 @@ A private, no-login dashboard for a six-person group fund — dues, a joint trip
 - Every edit (vote, ledger change, discussion message) writes immediately — no debounce — so nothing is lost to a quick refresh.
 - A daily scheduled job refreshes the market/news ticker by writing to the same row's `market` field only.
 
+## Identity
+
+There's no login system, but there is a lightweight identity layer: each of the six partners gets a private link (`?id=<their token>`) that resolves to their name via a database function and is then remembered on that device — no password, no account, and nobody can spoof someone else by clicking a different name. See `resolve_member` in `schema.sql` for how the token-to-name lookup is locked down, and `resolveIdentity()` in `logic_supabase.js` for the client side. Anyone without a valid link gets view-only access. The actual tokens are never committed here — they live only in the database and in each partner's personal link.
+
 ## Files
 
 - `index.html` — the built, deployable site (this is what gets dragged onto Netlify).

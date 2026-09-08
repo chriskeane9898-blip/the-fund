@@ -60,3 +60,37 @@ insert into fund_state (id, data) values (
   }$json$::jsonb
 )
 on conflict (id) do nothing;
+
+-- Identity layer (personal links) ------------------------------------------
+-- Each partner gets a private link like yoursite.netlify.app/?id=<token>.
+-- Opening it once resolves the token to their name and remembers it on
+-- that device — no password, no account. Nobody can spoof someone else
+-- by just clicking a different name anymore.
+--
+-- IMPORTANT: this table intentionally has NO select/insert/update policies
+-- for anon/authenticated. If you add one, anyone could read every token
+-- and impersonate everyone. The only door in is the resolve_member()
+-- function below, which reveals just the one name matching the token you
+-- already hold, and runs with elevated privilege precisely so the table
+-- itself can stay locked down.
+create table if not exists members (
+  name text primary key,
+  token text not null unique
+);
+
+alter table members enable row level security;
+
+create or replace function resolve_member(p_token text)
+returns text
+language sql
+security definer
+set search_path = public
+as $$
+  select name from members where token = p_token;
+$$;
+
+grant execute on function resolve_member(text) to anon, authenticated;
+
+-- Run this file's changes above first (table + function), then separately
+-- run the private insert with everyone's actual tokens — that insert is
+-- NOT included here and should never be committed anywhere public.
