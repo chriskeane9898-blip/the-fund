@@ -52,25 +52,7 @@
         </div>
       </div>
       <div class="trip-col">
-        <h3>Trip Talk</h3>
-        <div class="discussion" id="discussionList"></div>
-        <div class="discussion-input">
-          <input type="text" id="discussionInput" placeholder="Say something...">
-          <button class="btn small" id="discussionSendBtn">Send</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="grid-2">
-
-    <div class="panel">
-      <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
-      <div class="panel-head">
-        <h2>Board Meetings</h2>
-        <span class="panel-flag" id="meetingFlag">—</span>
-      </div>
-      <div class="panel-body">
+        <h3>Board Meetings <span class="panel-flag" id="meetingFlag" style="margin-left:6px;">—</span></h3>
 
         <div class="readout" id="nextMeetingLockedBox" style="display:none;">
           <div class="rk">Next Meeting — Locked In</div>
@@ -79,52 +61,14 @@
         </div>
 
         <div id="meetingVoteSection">
-          <div class="rk" style="font-family:var(--mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-faint);margin-bottom:8px;">Next Meeting — Vote On A Date</div>
           <div id="meetingDatesList"></div>
           <div class="add-form">
             <input type="text" id="newDateLabel" placeholder="Propose a date &amp; time, e.g. Sat Oct 18 · 7:00 PM">
             <button class="btn" id="addDateBtn">Propose</button>
           </div>
         </div>
-
       </div>
     </div>
-
-    <div class="panel">
-      <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
-      <div class="panel-head">
-        <h2>Fund Ledger</h2>
-        <span class="panel-flag live">Editable</span>
-      </div>
-      <div class="panel-body">
-
-        <div class="balance-row">
-          <div class="balance-tile">
-            <div class="rk">Total Fund</div>
-            <div class="rv">$<input class="num-in" type="number" id="fundTotal" style="width:90px;border:none;background:transparent;padding:0;font-size:22px;color:var(--accent-strong);"></div>
-          </div>
-          <div class="balance-tile">
-            <div class="rk">Monthly Dues</div>
-            <div class="rv">$<input class="num-in" type="number" id="fundDues" style="width:60px;border:none;background:transparent;padding:0;font-size:22px;"></div>
-          </div>
-        </div>
-
-        <div class="stackbar" id="stackbar"><div class="seg-h" id="segHysa"></div><div class="seg-i" id="segInv"></div></div>
-        <div class="stackbar-legend">
-          <span><i class="i1"></i>HYSA $<input class="num-in" type="number" id="fundHysa" style="width:60px;background:transparent;border:none;padding:0;color:var(--text-dim);font-size:10.5px;"></span>
-          <span><i class="i2"></i>Investments $<input class="num-in" type="number" id="fundInv" style="width:60px;background:transparent;border:none;padding:0;color:var(--text-dim);font-size:10.5px;"></span>
-        </div>
-
-        <div class="ledger-wrap">
-          <table class="ledger" id="ledgerTable"></table>
-        </div>
-        <div style="margin-top:12px;">
-          <button class="btn small" id="addMonthBtn">+ Add Month</button>
-        </div>
-
-      </div>
-    </div>
-
   </div>
 
   <div class="panel wide">
@@ -156,6 +100,41 @@
         <input type="text" id="newArticleNote" placeholder="Why it's worth a read (optional)">
         <button class="btn full" id="addArticleBtn">Post Article</button>
       </div>
+    </div>
+  </div>
+
+  <div class="panel wide">
+    <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+    <div class="panel-head">
+      <h2>Fund Ledger</h2>
+      <span class="panel-flag live">Editable</span>
+    </div>
+    <div class="panel-body">
+
+      <div class="balance-row">
+        <div class="balance-tile">
+          <div class="rk">Total Fund</div>
+          <div class="rv">$<input class="num-in" type="number" id="fundTotal" style="width:90px;border:none;background:transparent;padding:0;font-size:22px;color:var(--accent-strong);"></div>
+        </div>
+        <div class="balance-tile">
+          <div class="rk">Monthly Dues</div>
+          <div class="rv">$<input class="num-in" type="number" id="fundDues" style="width:60px;border:none;background:transparent;padding:0;font-size:22px;"></div>
+        </div>
+      </div>
+
+      <div class="stackbar" id="stackbar"><div class="seg-h" id="segHysa"></div><div class="seg-i" id="segInv"></div></div>
+      <div class="stackbar-legend">
+        <span><i class="i1"></i>HYSA $<input class="num-in" type="number" id="fundHysa" style="width:60px;background:transparent;border:none;padding:0;color:var(--text-dim);font-size:10.5px;"></span>
+        <span><i class="i2"></i>Investments $<input class="num-in" type="number" id="fundInv" style="width:60px;background:transparent;border:none;padding:0;color:var(--text-dim);font-size:10.5px;"></span>
+      </div>
+
+      <div class="ledger-wrap">
+        <table class="ledger" id="ledgerTable"></table>
+      </div>
+      <div style="margin-top:12px;">
+        <button class="btn small" id="addMonthBtn">+ Add Month</button>
+      </div>
+
     </div>
   </div>
 

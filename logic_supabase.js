@@ -279,16 +279,6 @@
         '</div>';
       }).join('');
     }
-
-    var d = document.getElementById('discussionList');
-    if(!state.discussion.length){
-      d.innerHTML = '<div class="empty">No messages yet — say something.</div>';
-    } else {
-      d.innerHTML = state.discussion.map(function(m){
-        return '<div class="msg"><div class="msg-head"><b>'+esc(m.author)+'</b><span>'+fmtTime(m.ts)+'</span></div><div class="msg-text">'+esc(m.text)+'</div></div>';
-      }).join('');
-      d.scrollTop = d.scrollHeight;
-    }
   }
 
   /* ---------------- render: roster ---------------- */
@@ -488,21 +478,6 @@
       state.articles.push({id:newId(), url:url, note:noteInput.value.trim(), addedBy:me, ts:new Date().toISOString()});
       urlInput.value=''; noteInput.value='';
       publishState();
-    });
-
-    function sendDiscussion(){
-      var input = document.getElementById('discussionInput');
-      var text = input.value.trim();
-      if(!text) return;
-      if(!requireMe()) return;
-      state.discussion.push({id:newId(), author:me, text:text, ts:new Date().toISOString()});
-      if(state.discussion.length > 200) state.discussion = state.discussion.slice(-200);
-      input.value='';
-      publishState();
-    }
-    document.getElementById('discussionSendBtn').addEventListener('click', sendDiscussion);
-    document.getElementById('discussionInput').addEventListener('keydown', function(e){
-      if(e.key==='Enter') sendDiscussion();
     });
 
     document.body.addEventListener('change', function(e){
