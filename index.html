@@ -326,6 +326,26 @@
   .vote-count{font-family:var(--mono);font-size:18px;color:var(--accent-strong);min-width:28px;text-align:right;}
   .vote-actions{display:flex;flex-direction:column;gap:6px;align-items:flex-end;}
 
+  .wyr-card{padding:14px 0;border-bottom:1px solid var(--border);}
+  .wyr-card:last-child{border-bottom:none;}
+  .wyr-versus{display:flex;align-items:stretch;gap:14px;}
+  .wyr-side{flex:1;min-width:0;}
+  .wyr-side.picked .wyr-opt{color:var(--accent-strong);}
+  .wyr-opt{font-size:13.5px;color:var(--text);font-weight:500;line-height:1.35;min-height:2.7em;}
+  .wyr-meta{font-family:var(--mono);font-size:10.5px;color:var(--text-faint);margin-top:6px;}
+  .wyr-side .btn{margin-top:8px;}
+  .wyr-or{
+    align-self:center;
+    font-family:var(--mono);font-size:10px;letter-spacing:0.08em;
+    color:var(--text-faint);
+    padding:4px 8px;border:1px solid var(--border);
+  }
+  .wyr-meta-row{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--text-faint);margin-top:8px;}
+  @media (max-width:560px){
+    .wyr-versus{flex-direction:column;}
+    .wyr-or{align-self:center;}
+  }
+
   .empty{
     font-family:var(--mono);
     font-size:12px;
@@ -483,6 +503,33 @@
 
   <div class="stats" id="statsRow"></div>
 
+  <div class="panel wide">
+    <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+    <div class="panel-head">
+      <h2>Next Trip</h2>
+      <span class="panel-flag" id="tripFlag">—</span>
+    </div>
+    <div class="trip-grid">
+      <div class="trip-col">
+        <h3>Destination Vote</h3>
+        <div id="tripOptionsList"></div>
+        <div class="add-form-2">
+          <input type="text" id="newTripDest" placeholder="Destination, e.g. Outer Banks, NC">
+          <input type="text" id="newTripBlurb" placeholder="Why (optional)">
+          <button class="btn full" id="addTripBtn">Add Destination</button>
+        </div>
+      </div>
+      <div class="trip-col">
+        <h3>Trip Talk</h3>
+        <div class="discussion" id="discussionList"></div>
+        <div class="discussion-input">
+          <input type="text" id="discussionInput" placeholder="Say something...">
+          <button class="btn small" id="discussionSendBtn">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="grid-2">
 
     <div class="panel">
@@ -551,26 +598,15 @@
   <div class="panel wide">
     <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
     <div class="panel-head">
-      <h2>Next Trip</h2>
-      <span class="panel-flag" id="tripFlag">—</span>
+      <h2>Would You Rather of the Week</h2>
+      <span class="panel-flag live">Vote</span>
     </div>
-    <div class="trip-grid">
-      <div class="trip-col">
-        <h3>Destination Vote</h3>
-        <div id="tripOptionsList"></div>
-        <div class="add-form-2">
-          <input type="text" id="newTripDest" placeholder="Destination, e.g. Outer Banks, NC">
-          <input type="text" id="newTripBlurb" placeholder="Why (optional)">
-          <button class="btn full" id="addTripBtn">Add Destination</button>
-        </div>
-      </div>
-      <div class="trip-col">
-        <h3>Trip Talk</h3>
-        <div class="discussion" id="discussionList"></div>
-        <div class="discussion-input">
-          <input type="text" id="discussionInput" placeholder="Say something...">
-          <button class="btn small" id="discussionSendBtn">Send</button>
-        </div>
+    <div class="panel-body">
+      <div id="wyrList"></div>
+      <div class="add-form-2" style="margin-top:14px;">
+        <input type="text" id="newWyrA" placeholder="Option A, e.g. Fold laundry forever">
+        <input type="text" id="newWyrB" placeholder="Option B, e.g. Never sit down again">
+        <button class="btn full" id="addWyrBtn">Post Would You Rather</button>
       </div>
     </div>
   </div>
@@ -643,9 +679,16 @@
   var state = {
     fund: { total:0, hysa:0, investments:0, dues:25, ledger:[] },
     meeting: { lastLabel:'', lastNote:'', decided:false, nextLabel:'' },
-    dates: [], trips: [], discussion: [],
+    dates: [], trips: [], discussion: [], wyr: [],
     market: { asOf:'', indexes:[], headlines:[] }
   };
+
+  /** Older rows in the database were seeded before "wyr" existed — fill
+   * in anything missing so render code never has to null-check it. */
+  function normalizeState(s){
+    if(!s.wyr) s.wyr = [];
+    return s;
+  }
 
   function flashSaved(){
     var el = document.getElementById('saveFlash');
@@ -877,6 +920,39 @@
     }).join('');
   }
 
+  /* ---------------- render: would you rather ---------------- */
+  function renderWYR(){
+    var list = document.getElementById('wyrList');
+    if(!state.wyr.length){
+      list.innerHTML = '<div class="empty">No would-you-rathers posted yet — add one below.</div>';
+      return;
+    }
+    list.innerHTML = state.wyr.slice().reverse().map(function(w){
+      var votesA = w.votesA || [], votesB = w.votesB || [];
+      var total = votesA.length + votesB.length;
+      var pctA = total ? Math.round(votesA.length/total*100) : 50;
+      var pctB = 100 - pctA;
+      var pickedA = me && votesA.indexOf(me)>-1;
+      var pickedB = me && votesB.indexOf(me)>-1;
+      function side(label, votes, pct, picked, sideKey){
+        return '<div class="wyr-side'+(picked?' picked':'')+'">'+
+          '<div class="wyr-opt">'+esc(label)+'</div>'+
+          '<div class="vote-bar-track"><div class="vote-bar-fill" style="width:'+pct+'%"></div></div>'+
+          '<div class="wyr-meta">'+votes.length+' vote'+(votes.length===1?'':'s')+' · '+pct+'%</div>'+
+          '<button class="btn small'+(picked?' gold':'')+'" data-wyr-id="'+esc(w.id)+'" data-wyr-side="'+sideKey+'">'+(picked?'Picked ✓':'Pick this')+'</button>'+
+        '</div>';
+      }
+      return '<div class="wyr-card">'+
+        '<div class="wyr-versus">'+
+          side(w.a, votesA, pctA, pickedA, 'a')+
+          '<div class="wyr-or">OR</div>'+
+          side(w.b, votesB, pctB, pickedB, 'b')+
+        '</div>'+
+        (w.addedBy ? '<div class="wyr-meta-row"><span>posted by '+esc(w.addedBy)+'</span><span>'+total+' total vote'+(total===1?'':'s')+'</span></div>' : '')+
+      '</div>';
+    }).join('');
+  }
+
   function renderAll(){
     renderTicker();
     renderMemberPills();
@@ -884,6 +960,7 @@
     renderMeetings();
     renderFund();
     renderTrip();
+    renderWYR();
     renderRoster();
   }
 
@@ -982,6 +1059,17 @@
       publishState();
     });
 
+    document.getElementById('addWyrBtn').addEventListener('click', function(){
+      var aInput = document.getElementById('newWyrA');
+      var bInput = document.getElementById('newWyrB');
+      var a = aInput.value.trim(), b = bInput.value.trim();
+      if(!a || !b) return;
+      if(!requireMe()) return;
+      state.wyr.push({id:newId(), a:a, b:b, votesA:[], votesB:[], addedBy:me, createdAt:new Date().toISOString()});
+      aInput.value=''; bInput.value='';
+      publishState();
+    });
+
     function sendDiscussion(){
       var input = document.getElementById('discussionInput');
       var text = input.value.trim();
@@ -1035,6 +1123,13 @@
         if(!requireMe()) return;
         toggleVote('trips', voteTripId);
       }
+
+      var wyrId = e.target.getAttribute && e.target.getAttribute('data-wyr-id');
+      var wyrSide = e.target.getAttribute && e.target.getAttribute('data-wyr-side');
+      if(wyrId && wyrSide){
+        if(!requireMe()) return;
+        toggleWyrVote(wyrId, wyrSide);
+      }
     });
   }
 
@@ -1049,6 +1144,28 @@
     publishState();
   }
 
+  /** Would-you-rather voting is exclusive — picking a side removes you
+   * from the other side first, and clicking your current pick again
+   * removes your vote entirely (so you can go back to undecided). */
+  function toggleWyrVote(id, side){
+    var item = state.wyr.filter(function(x){return x.id===id;})[0];
+    if(!item) return;
+    var votesA = (item.votesA||[]).slice();
+    var votesB = (item.votesB||[]).slice();
+    var idxA = votesA.indexOf(me);
+    var idxB = votesB.indexOf(me);
+    if(side==='a'){
+      if(idxB>-1) votesB.splice(idxB,1);
+      if(idxA>-1) votesA.splice(idxA,1); else votesA.push(me);
+    } else {
+      if(idxA>-1) votesA.splice(idxA,1);
+      if(idxB>-1) votesB.splice(idxB,1); else votesB.push(me);
+    }
+    item.votesA = votesA;
+    item.votesB = votesB;
+    publishState();
+  }
+
   /* Applies a fresh row from the DB (our own save round-tripping back,
    * or someone else's change arriving over realtime) without stomping
    * on whatever the person is actively typing into a focused field. */
@@ -1057,7 +1174,7 @@
     var active = document.activeElement;
     var typingInField = active && (active.tagName==='INPUT' || active.tagName==='TEXTAREA');
     if(typingInField) return; // next blur/change will publish and reconcile
-    state = newState;
+    state = normalizeState(newState);
     renderAll();
     syncedNow();
   }
@@ -1109,7 +1226,7 @@
           showOffline('⚠ COULD NOT LOAD — ' + (res.error ? res.error.message : 'no data found') + '. Refresh to retry.');
           return;
         }
-        state = res.data.data;
+        state = normalizeState(res.data.data);
         renderAll();
         syncedNow();
         hideOffline();

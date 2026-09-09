@@ -55,9 +55,16 @@
   var state = {
     fund: { total:0, hysa:0, investments:0, dues:25, ledger:[] },
     meeting: { lastLabel:'', lastNote:'', decided:false, nextLabel:'' },
-    dates: [], trips: [], discussion: [],
+    dates: [], trips: [], discussion: [], wyr: [],
     market: { asOf:'', indexes:[], headlines:[] }
   };
+
+  /** Older rows in the database were seeded before "wyr" existed — fill
+   * in anything missing so render code never has to null-check it. */
+  function normalizeState(s){
+    if(!s.wyr) s.wyr = [];
+    return s;
+  }
 
   function flashSaved(){
     var el = document.getElementById('saveFlash');
@@ -289,6 +296,39 @@
     }).join('');
   }
 
+  /* ---------------- render: would you rather ---------------- */
+  function renderWYR(){
+    var list = document.getElementById('wyrList');
+    if(!state.wyr.length){
+      list.innerHTML = '<div class="empty">No would-you-rathers posted yet — add one below.</div>';
+      return;
+    }
+    list.innerHTML = state.wyr.slice().reverse().map(function(w){
+      var votesA = w.votesA || [], votesB = w.votesB || [];
+      var total = votesA.length + votesB.length;
+      var pctA = total ? Math.round(votesA.length/total*100) : 50;
+      var pctB = 100 - pctA;
+      var pickedA = me && votesA.indexOf(me)>-1;
+      var pickedB = me && votesB.indexOf(me)>-1;
+      function side(label, votes, pct, picked, sideKey){
+        return '<div class="wyr-side'+(picked?' picked':'')+'">'+
+          '<div class="wyr-opt">'+esc(label)+'</div>'+
+          '<div class="vote-bar-track"><div class="vote-bar-fill" style="width:'+pct+'%"></div></div>'+
+          '<div class="wyr-meta">'+votes.length+' vote'+(votes.length===1?'':'s')+' · '+pct+'%</div>'+
+          '<button class="btn small'+(picked?' gold':'')+'" data-wyr-id="'+esc(w.id)+'" data-wyr-side="'+sideKey+'">'+(picked?'Picked ✓':'Pick this')+'</button>'+
+        '</div>';
+      }
+      return '<div class="wyr-card">'+
+        '<div class="wyr-versus">'+
+          side(w.a, votesA, pctA, pickedA, 'a')+
+          '<div class="wyr-or">OR</div>'+
+          side(w.b, votesB, pctB, pickedB, 'b')+
+        '</div>'+
+        (w.addedBy ? '<div class="wyr-meta-row"><span>posted by '+esc(w.addedBy)+'</span><span>'+total+' total vote'+(total===1?'':'s')+'</span></div>' : '')+
+      '</div>';
+    }).join('');
+  }
+
   function renderAll(){
     renderTicker();
     renderMemberPills();
@@ -296,6 +336,7 @@
     renderMeetings();
     renderFund();
     renderTrip();
+    renderWYR();
     renderRoster();
   }
 
@@ -394,6 +435,17 @@
       publishState();
     });
 
+    document.getElementById('addWyrBtn').addEventListener('click', function(){
+      var aInput = document.getElementById('newWyrA');
+      var bInput = document.getElementById('newWyrB');
+      var a = aInput.value.trim(), b = bInput.value.trim();
+      if(!a || !b) return;
+      if(!requireMe()) return;
+      state.wyr.push({id:newId(), a:a, b:b, votesA:[], votesB:[], addedBy:me, createdAt:new Date().toISOString()});
+      aInput.value=''; bInput.value='';
+      publishState();
+    });
+
     function sendDiscussion(){
       var input = document.getElementById('discussionInput');
       var text = input.value.trim();
@@ -447,6 +499,13 @@
         if(!requireMe()) return;
         toggleVote('trips', voteTripId);
       }
+
+      var wyrId = e.target.getAttribute && e.target.getAttribute('data-wyr-id');
+      var wyrSide = e.target.getAttribute && e.target.getAttribute('data-wyr-side');
+      if(wyrId && wyrSide){
+        if(!requireMe()) return;
+        toggleWyrVote(wyrId, wyrSide);
+      }
     });
   }
 
@@ -461,6 +520,28 @@
     publishState();
   }
 
+  /** Would-you-rather voting is exclusive — picking a side removes you
+   * from the other side first, and clicking your current pick again
+   * removes your vote entirely (so you can go back to undecided). */
+  function toggleWyrVote(id, side){
+    var item = state.wyr.filter(function(x){return x.id===id;})[0];
+    if(!item) return;
+    var votesA = (item.votesA||[]).slice();
+    var votesB = (item.votesB||[]).slice();
+    var idxA = votesA.indexOf(me);
+    var idxB = votesB.indexOf(me);
+    if(side==='a'){
+      if(idxB>-1) votesB.splice(idxB,1);
+      if(idxA>-1) votesA.splice(idxA,1); else votesA.push(me);
+    } else {
+      if(idxA>-1) votesA.splice(idxA,1);
+      if(idxB>-1) votesB.splice(idxB,1); else votesB.push(me);
+    }
+    item.votesA = votesA;
+    item.votesB = votesB;
+    publishState();
+  }
+
   /* Applies a fresh row from the DB (our own save round-tripping back,
    * or someone else's change arriving over realtime) without stomping
    * on whatever the person is actively typing into a focused field. */
@@ -469,7 +550,7 @@
     var active = document.activeElement;
     var typingInField = active && (active.tagName==='INPUT' || active.tagName==='TEXTAREA');
     if(typingInField) return; // next blur/change will publish and reconcile
-    state = newState;
+    state = normalizeState(newState);
     renderAll();
     syncedNow();
   }
@@ -521,7 +602,7 @@
           showOffline('⚠ COULD NOT LOAD — ' + (res.error ? res.error.message : 'no data found') + '. Refresh to retry.');
           return;
         }
-        state = res.data.data;
+        state = normalizeState(res.data.data);
         renderAll();
         syncedNow();
         hideOffline();

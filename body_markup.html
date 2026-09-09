@@ -35,6 +35,33 @@
 
   <div class="stats" id="statsRow"></div>
 
+  <div class="panel wide">
+    <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+    <div class="panel-head">
+      <h2>Next Trip</h2>
+      <span class="panel-flag" id="tripFlag">—</span>
+    </div>
+    <div class="trip-grid">
+      <div class="trip-col">
+        <h3>Destination Vote</h3>
+        <div id="tripOptionsList"></div>
+        <div class="add-form-2">
+          <input type="text" id="newTripDest" placeholder="Destination, e.g. Outer Banks, NC">
+          <input type="text" id="newTripBlurb" placeholder="Why (optional)">
+          <button class="btn full" id="addTripBtn">Add Destination</button>
+        </div>
+      </div>
+      <div class="trip-col">
+        <h3>Trip Talk</h3>
+        <div class="discussion" id="discussionList"></div>
+        <div class="discussion-input">
+          <input type="text" id="discussionInput" placeholder="Say something...">
+          <button class="btn small" id="discussionSendBtn">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div class="grid-2">
 
     <div class="panel">
@@ -103,26 +130,15 @@
   <div class="panel wide">
     <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
     <div class="panel-head">
-      <h2>Next Trip</h2>
-      <span class="panel-flag" id="tripFlag">—</span>
+      <h2>Would You Rather of the Week</h2>
+      <span class="panel-flag live">Vote</span>
     </div>
-    <div class="trip-grid">
-      <div class="trip-col">
-        <h3>Destination Vote</h3>
-        <div id="tripOptionsList"></div>
-        <div class="add-form-2">
-          <input type="text" id="newTripDest" placeholder="Destination, e.g. Outer Banks, NC">
-          <input type="text" id="newTripBlurb" placeholder="Why (optional)">
-          <button class="btn full" id="addTripBtn">Add Destination</button>
-        </div>
-      </div>
-      <div class="trip-col">
-        <h3>Trip Talk</h3>
-        <div class="discussion" id="discussionList"></div>
-        <div class="discussion-input">
-          <input type="text" id="discussionInput" placeholder="Say something...">
-          <button class="btn small" id="discussionSendBtn">Send</button>
-        </div>
+    <div class="panel-body">
+      <div id="wyrList"></div>
+      <div class="add-form-2" style="margin-top:14px;">
+        <input type="text" id="newWyrA" placeholder="Option A, e.g. Fold laundry forever">
+        <input type="text" id="newWyrB" placeholder="Option B, e.g. Never sit down again">
+        <button class="btn full" id="addWyrBtn">Post Would You Rather</button>
       </div>
     </div>
   </div>

@@ -44,6 +44,7 @@ insert into fund_state (id, data) values (
     "dates": [],
     "trips": [],
     "discussion": [],
+    "wyr": [],
     "market": {
       "asOf": "Sep 3, 2026",
       "indexes": [
