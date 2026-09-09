@@ -55,14 +55,16 @@
   var state = {
     fund: { total:0, hysa:0, investments:0, dues:25, ledger:[] },
     meeting: { lastLabel:'', lastNote:'', decided:false, nextLabel:'' },
-    dates: [], trips: [], discussion: [], wyr: [],
+    dates: [], trips: [], discussion: [], wyr: [], articles: [],
     market: { asOf:'', indexes:[], headlines:[] }
   };
 
-  /** Older rows in the database were seeded before "wyr" existed — fill
-   * in anything missing so render code never has to null-check it. */
+  /** Older rows in the database were seeded before "wyr"/"articles"
+   * existed — fill in anything missing so render code never has to
+   * null-check it. */
   function normalizeState(s){
     if(!s.wyr) s.wyr = [];
+    if(!s.articles) s.articles = [];
     return s;
   }
 
@@ -329,6 +331,36 @@
     }).join('');
   }
 
+  /* ---------------- render: articles ---------------- */
+  function normalizeUrl(u){
+    u = (u||'').trim();
+    if(!u) return u;
+    if(!/^https?:\/\//i.test(u)) u = 'https://' + u;
+    return u;
+  }
+  function displayUrl(u){
+    try{
+      var host = new URL(u).hostname.replace(/^www\./,'');
+      return host;
+    }catch(e){ return u; }
+  }
+  function renderArticles(){
+    var list = document.getElementById('articlesList');
+    if(!state.articles.length){
+      list.innerHTML = '<div class="empty">No articles posted yet — share the first one.</div>';
+      return;
+    }
+    list.innerHTML = state.articles.slice().reverse().map(function(a){
+      return '<div class="msg">'+
+        '<div class="msg-head"><b>'+esc(a.addedBy)+'</b><span>'+fmtTime(a.ts)+'</span></div>'+
+        '<div class="msg-text">'+
+          '<a href="'+esc(a.url)+'" target="_blank" rel="noopener noreferrer">'+esc(displayUrl(a.url))+' ↗</a>'+
+          (a.note ? ' — '+esc(a.note) : '')+
+        '</div>'+
+      '</div>';
+    }).join('');
+  }
+
   function renderAll(){
     renderTicker();
     renderMemberPills();
@@ -337,6 +369,7 @@
     renderFund();
     renderTrip();
     renderWYR();
+    renderArticles();
     renderRoster();
   }
 
@@ -443,6 +476,17 @@
       if(!requireMe()) return;
       state.wyr.push({id:newId(), a:a, b:b, votesA:[], votesB:[], addedBy:me, createdAt:new Date().toISOString()});
       aInput.value=''; bInput.value='';
+      publishState();
+    });
+
+    document.getElementById('addArticleBtn').addEventListener('click', function(){
+      var urlInput = document.getElementById('newArticleUrl');
+      var noteInput = document.getElementById('newArticleNote');
+      var url = normalizeUrl(urlInput.value);
+      if(!url) return;
+      if(!requireMe()) return;
+      state.articles.push({id:newId(), url:url, note:noteInput.value.trim(), addedBy:me, ts:new Date().toISOString()});
+      urlInput.value=''; noteInput.value='';
       publishState();
     });
 
