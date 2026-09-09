@@ -1,0 +1,22 @@
+name: Refresh market ticker
+
+on:
+  schedule:
+    # Weekdays at 15:00 UTC (11am ET). GitHub's cron runners have normal
+    # internet access, unlike the Claude sandbox this was first tried from.
+    - cron: '0 15 * * 1-5'
+  workflow_dispatch: {}
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Refresh ticker
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: python3 scripts/refresh_ticker.py
