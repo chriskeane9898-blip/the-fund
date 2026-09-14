@@ -420,6 +420,22 @@
       if(!requireMe()) return;
       state.meeting.decided = false; publishState();
     });
+    document.getElementById('resetMeetingBtn').addEventListener('click', function(){
+      if(!requireMe()) return;
+      if(!confirm('Clear all proposed dates and votes, and start a fresh vote for next month\'s meeting?')) return;
+      if(state.meeting.decided){ state.meeting.lastLabel = state.meeting.nextLabel; }
+      state.dates = [];
+      state.meeting.decided = false;
+      state.meeting.nextLabel = '';
+      publishState();
+    });
+    document.getElementById('clearWyrBtn').addEventListener('click', function(){
+      if(!requireMe()) return;
+      if(!state.wyr.length) return;
+      if(!confirm('Clear all Would You Rather posts and votes, and start fresh for the new week?')) return;
+      state.wyr = [];
+      publishState();
+    });
     document.getElementById('addDateBtn').addEventListener('click', function(){
       var input = document.getElementById('newDateLabel');
       var label = input.value.trim();

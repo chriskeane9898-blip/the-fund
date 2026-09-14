@@ -67,6 +67,8 @@
             <button class="btn" id="addDateBtn">Propose</button>
           </div>
         </div>
+
+        <button class="btn ghost small" id="resetMeetingBtn" style="margin-top:10px;">Start new month (clear votes)</button>
       </div>
     </div>
   </div>
@@ -78,6 +80,9 @@
       <span class="panel-flag live">Vote</span>
     </div>
     <div class="panel-body">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
+        <button class="btn ghost small" id="clearWyrBtn">Clear all (new week)</button>
+      </div>
       <div id="wyrList"></div>
       <div class="add-form-2" style="margin-top:14px;">
         <input type="text" id="newWyrA" placeholder="Option A, e.g. Fold laundry forever">
