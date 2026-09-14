@@ -55,16 +55,17 @@
   var state = {
     fund: { total:0, hysa:0, investments:0, dues:25, ledger:[] },
     meeting: { lastLabel:'', lastNote:'', decided:false, nextLabel:'' },
-    dates: [], trips: [], discussion: [], wyr: [], articles: [],
+    dates: [], trips: [], discussion: [], wyr: [], articles: [], meetingHistory: [],
     market: { asOf:'', indexes:[], headlines:[] }
   };
 
-  /** Older rows in the database were seeded before "wyr"/"articles"
-   * existed — fill in anything missing so render code never has to
-   * null-check it. */
+  /** Older rows in the database were seeded before "wyr"/"articles"/
+   * "meetingHistory" existed — fill in anything missing so render code
+   * never has to null-check it. */
   function normalizeState(s){
     if(!s.wyr) s.wyr = [];
     if(!s.articles) s.articles = [];
+    if(!s.meetingHistory) s.meetingHistory = [];
     return s;
   }
 
@@ -214,6 +215,23 @@
     }
   }
 
+  /* ---------------- render: past meetings ---------------- */
+  function renderMeetingHistory(){
+    var list = document.getElementById('meetingHistoryList');
+    if(!list) return;
+    var hist = state.meetingHistory || [];
+    if(!hist.length){
+      list.innerHTML = '<div class="empty">No past meetings archived yet.</div>';
+      return;
+    }
+    list.innerHTML = hist.slice().reverse().map(function(h){
+      return '<div class="msg">'+
+        '<div class="msg-head"><b>'+esc(h.label)+'</b></div>'+
+        '<div class="msg-text" style="font-family:var(--mono);font-size:11px;color:var(--text-faint);">Archived '+fmtTime(h.archivedAt)+(h.archivedBy?' by '+esc(h.archivedBy):'')+'</div>'+
+      '</div>';
+    }).join('');
+  }
+
   /* ---------------- render: fund ledger ---------------- */
   function renderFund(){
     document.getElementById('fundTotal').value = state.fund.total;
@@ -356,6 +374,7 @@
     renderMemberPills();
     renderStats();
     renderMeetings();
+    renderMeetingHistory();
     renderFund();
     renderTrip();
     renderWYR();
@@ -423,7 +442,10 @@
     document.getElementById('resetMeetingBtn').addEventListener('click', function(){
       if(!requireMe()) return;
       if(!confirm('Clear all proposed dates and votes, and start a fresh vote for next month\'s meeting?')) return;
-      if(state.meeting.decided){ state.meeting.lastLabel = state.meeting.nextLabel; }
+      if(state.meeting.decided && state.meeting.nextLabel){
+        state.meetingHistory.push({id:newId(), label:state.meeting.nextLabel, archivedAt:new Date().toISOString(), archivedBy:me});
+        state.meeting.lastLabel = state.meeting.nextLabel;
+      }
       state.dates = [];
       state.meeting.decided = false;
       state.meeting.nextLabel = '';
